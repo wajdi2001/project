@@ -9,9 +9,15 @@ import {
   CheckCircle,
   AlertCircle,
   Menu,
-  X
+  X,
+  Sparkles,
+  Star,
+  ArrowUp,
+  ArrowDown,
+  Calendar,
+  BarChart3
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Order } from '../types';
@@ -70,6 +76,20 @@ const Dashboard: React.FC = () => {
     avgOrderValue: todayOrders.length > 0 ? todayOrders.reduce((sum, order) => sum + order.total, 0) / todayOrders.length : 0,
     items: todayOrders.reduce((sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0)
   };
+
+  // Yesterday's stats for comparison
+  const yesterday = subDays(new Date(), 1);
+  const yesterdayOrders = orders.filter(order => 
+    format(order.createdAt, 'yyyy-MM-dd') === format(yesterday, 'yyyy-MM-dd')
+  );
+  const yesterdayStats = {
+    sales: yesterdayOrders.reduce((sum, order) => sum + order.total, 0),
+    orders: yesterdayOrders.length
+  };
+
+  // Calculate growth percentages
+  const salesGrowth = yesterdayStats.sales > 0 ? ((todayStats.sales - yesterdayStats.sales) / yesterdayStats.sales) * 100 : 0;
+  const ordersGrowth = yesterdayStats.orders > 0 ? ((todayStats.orders - yesterdayStats.orders) / yesterdayStats.orders) * 100 : 0;
 
   // Sales data for the last 7 days
   const salesData = Array.from({ length: 7 }, (_, i) => {
@@ -146,273 +166,332 @@ const Dashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-amber-50 to-orange-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-amber-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading Dashboard...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Mobile Header */}
-      <div className="flex items-center justify-between sm:hidden">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {format(new Date(), 'MMM do, yyyy')}
-          </p>
+    <div className="space-y-6">
+      {/* Enhanced Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-lg">
+            <BarChart3 className="h-8 w-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+              Dashboard
+            </h1>
+            <p className="text-gray-600 flex items-center space-x-2">
+              <Calendar className="h-4 w-4" />
+              <span>{format(new Date(), 'EEEE, MMMM do, yyyy')}</span>
+              <Sparkles className="h-4 w-4 text-amber-500" />
+            </p>
+          </div>
         </div>
+        
         <button
           onClick={() => setShowMobileMenu(!showMobileMenu)}
-          className="p-2 text-gray-600 dark:text-gray-400"
+          className="sm:hidden p-2 text-gray-600 hover:text-gray-800 rounded-xl hover:bg-gray-100 transition-all duration-200"
         >
           {showMobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
 
-      {/* Desktop Header */}
-      <div className="hidden sm:block">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Overview of your coffee shop performance - {format(new Date(), 'EEEE, MMMM do, yyyy')}
-        </p>
+      {/* Enhanced Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatsCard
+          title="Today's Sales"
+          value={`$${todayStats.sales.toFixed(2)}`}
+          icon={DollarSign}
+          gradient="from-green-500 to-emerald-600"
+          growth={salesGrowth}
+          subtitle={`${todayStats.orders} orders`}
+        />
+        
+        <StatsCard
+          title="Orders Today"
+          value={todayStats.orders.toString()}
+          icon={ShoppingCart}
+          gradient="from-blue-500 to-blue-600"
+          growth={ordersGrowth}
+          subtitle={`${todayStats.items} items`}
+        />
+        
+        <StatsCard
+          title="Average Order"
+          value={`$${todayStats.avgOrderValue.toFixed(2)}`}
+          icon={TrendingUp}
+          gradient="from-amber-500 to-orange-600"
+          subtitle="Per order"
+        />
+        
+        <StatsCard
+          title="Items Sold"
+          value={todayStats.items.toString()}
+          icon={Coffee}
+          gradient="from-purple-500 to-purple-600"
+          subtitle="Total today"
+        />
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
-                Today's Sales
-              </p>
-              <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
-                ${todayStats.sales.toFixed(2)}
-              </p>
-            </div>
-            <div className="p-2 sm:p-3 bg-green-50 dark:bg-green-900 rounded-lg flex-shrink-0">
-              <DollarSign className="h-4 w-4 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sales Trend */}
+        <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-200/50">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-900">Sales Trend (Last 7 Days)</h3>
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
+              <TrendingUp className="h-5 w-5 text-white" />
             </div>
           </div>
-          <div className="mt-2 sm:mt-4">
-            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-              {todayStats.orders} orders
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
-                Orders Today
-              </p>
-              <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
-                {todayStats.orders}
-              </p>
-            </div>
-            <div className="p-2 sm:p-3 bg-blue-50 dark:bg-blue-900 rounded-lg flex-shrink-0">
-              <ShoppingCart className="h-4 w-4 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
-            </div>
-          </div>
-          <div className="mt-2 sm:mt-4">
-            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-              {todayStats.items} items
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
-                Avg Order
-              </p>
-              <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
-                ${todayStats.avgOrderValue.toFixed(2)}
-              </p>
-            </div>
-            <div className="p-2 sm:p-3 bg-amber-50 dark:bg-amber-900 rounded-lg flex-shrink-0">
-              <TrendingUp className="h-4 w-4 sm:h-6 sm:w-6 text-amber-600 dark:text-amber-400" />
-            </div>
-          </div>
-          <div className="mt-2 sm:mt-4">
-            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-              Per order
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
-                Items Sold
-              </p>
-              <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
-                {todayStats.items}
-              </p>
-            </div>
-            <div className="p-2 sm:p-3 bg-purple-50 dark:bg-purple-900 rounded-lg flex-shrink-0">
-              <Coffee className="h-4 w-4 sm:h-6 sm:w-6 text-purple-600 dark:text-purple-400" />
-            </div>
-          </div>
-          <div className="mt-2 sm:mt-4">
-            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-              Total today
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts - Mobile: Stack vertically, Desktop: Side by side */}
-      <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">
-        {/* Sales Trend (Last 7 Days) */}
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Sales Trend (Last 7 Days)
-          </h3>
-          <div className="h-48 sm:h-64">
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={salesData}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
                   dataKey="date" 
-                  tick={{ fontSize: 12 }}
-                  interval={0}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  axisLine={false}
+                  tickLine={false}
                 />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value) => [`$${value}`, 'Sales']} />
-                <Line type="monotone" dataKey="sales" stroke="#d97706" strokeWidth={2} />
+                <YAxis 
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  formatter={(value) => [`$${value}`, 'Sales']}
+                  contentStyle={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="sales" 
+                  stroke="url(#salesGradient)" 
+                  strokeWidth={3}
+                  dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, fill: '#f59e0b' }}
+                />
+                <defs>
+                  <linearGradient id="salesGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#ea580c" />
+                  </linearGradient>
+                </defs>
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Hourly Sales Today */}
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Hourly Sales Today
-          </h3>
-          <div className="h-48 sm:h-64">
+        {/* Hourly Sales */}
+        <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-200/50">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-900">Hourly Sales Today</h3>
+            <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl">
+              <Clock className="h-5 w-5 text-white" />
+            </div>
+          </div>
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={hourlySales}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
                   dataKey="hour" 
-                  tick={{ fontSize: 12 }}
-                  interval={0}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  axisLine={false}
+                  tickLine={false}
                 />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value) => [`$${value}`, 'Sales']} />
-                <Bar dataKey="sales" fill="#d97706" />
+                <YAxis 
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  formatter={(value) => [`$${value}`, 'Sales']}
+                  contentStyle={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Bar 
+                  dataKey="sales" 
+                  fill="url(#barGradient)" 
+                  radius={[4, 4, 0, 0]}
+                />
+                <defs>
+                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#ea580c" />
+                  </linearGradient>
+                </defs>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Bottom Section - Mobile: Stack, Desktop: Side by side */}
-      <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">
-        {/* Top Products Today */}
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Top Products Today
-          </h3>
-          <div className="space-y-3">
+      {/* Bottom Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Products */}
+        <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-200/50">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-900">Top Products Today</h3>
+            <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl">
+              <Star className="h-5 w-5 text-white" />
+            </div>
+          </div>
+          <div className="space-y-4">
             {topProducts.length > 0 ? (
               topProducts.map((product, index) => (
-                <div key={product.name} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3 min-w-0 flex-1">
-                    <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 bg-amber-100 dark:bg-amber-900 rounded-full flex-shrink-0">
-                      <span className="text-amber-600 dark:text-amber-400 text-xs sm:text-sm font-medium">
-                        {index + 1}
-                      </span>
+                <div key={product.name} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border border-gray-200/50 hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center space-x-4">
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-2xl text-white font-bold text-sm ${
+                      index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-500' :
+                      index === 1 ? 'bg-gradient-to-br from-gray-400 to-gray-500' :
+                      index === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-700' :
+                      'bg-gradient-to-br from-blue-500 to-blue-600'
+                    }`}>
+                      {index + 1}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 dark:text-white text-sm sm:text-base truncate">
-                        {product.name}
-                      </p>
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        {product.quantity} sold
-                      </p>
+                    <div>
+                      <p className="font-bold text-gray-900">{product.name}</p>
+                      <p className="text-sm text-gray-600">{product.quantity} sold</p>
                     </div>
                   </div>
-                  <span className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base flex-shrink-0">
+                  <span className="font-bold text-lg bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
                     ${product.revenue.toFixed(2)}
                   </span>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-4 text-sm">
-                No sales today yet
-              </p>
+              <div className="text-center py-8">
+                <Coffee className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No sales today yet</p>
+              </div>
             )}
           </div>
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Recent Orders
-          </h3>
-          <div className="space-y-2 sm:space-y-3 max-h-64 sm:max-h-80 overflow-y-auto">
+        <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-200/50">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-900">Recent Orders</h3>
+            <div className="p-2 bg-gradient-to-br from-green-500 to-green-600 rounded-xl">
+              <ShoppingCart className="h-5 w-5 text-white" />
+            </div>
+          </div>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
             {recentOrders.length > 0 ? (
               recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div key={order.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border border-gray-200/50 hover:shadow-md transition-all duration-200">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm truncate">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-gray-900 text-sm truncate">
                         {order.orderNumber}
                       </span>
-                      <span className="font-semibold text-gray-900 dark:text-white text-xs sm:text-sm flex-shrink-0">
+                      <span className="font-bold text-gray-900">
                         ${order.total.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">
-                        {format(order.createdAt, 'hh:mm a')} • {order.items.reduce((sum, item) => sum + item.quantity, 0)} items
+                      <span className="text-xs text-gray-600 flex items-center space-x-2">
+                        <Clock className="h-3 w-3" />
+                        <span>{format(order.createdAt, 'hh:mm a')}</span>
+                        <span>•</span>
+                        <span>{order.items.reduce((sum, item) => sum + item.quantity, 0)} items</span>
                       </span>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                         {getStatusIcon(order.status)}
-                        <span className="hidden sm:inline">
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                        </span>
-                        <span className="sm:hidden">
-                          {order.status.charAt(0).toUpperCase()}
-                        </span>
+                        <span className="capitalize">{order.status}</span>
                       </span>
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-4 text-sm">
-                No orders yet
-              </p>
+              <div className="text-center py-8">
+                <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No orders yet</p>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Mobile Quick Actions (if needed) */}
+      {/* Mobile Quick Actions */}
       {showMobileMenu && (
-        <div className="sm:hidden bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Quick Actions</h3>
+        <div className="sm:hidden bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-200/50">
+          <h3 className="font-bold text-gray-900 mb-4 flex items-center space-x-2">
+            <Sparkles className="h-5 w-5 text-amber-500" />
+            <span>Quick Actions</span>
+          </h3>
           <div className="grid grid-cols-2 gap-3">
-            <button className="p-3 bg-amber-50 dark:bg-amber-900 text-amber-700 dark:text-amber-300 rounded-lg text-sm font-medium">
+            <button className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 rounded-2xl font-semibold border border-amber-200 hover:shadow-md transition-all duration-200">
               View Reports
             </button>
-            <button className="p-3 bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium">
+            <button className="p-4 bg-gradient-to-r from-blue-50 to-blue-50 text-blue-700 rounded-2xl font-semibold border border-blue-200 hover:shadow-md transition-all duration-200">
               Manage Orders
             </button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Enhanced Stats Card Component
+interface StatsCardProps {
+  title: string;
+  value: string;
+  icon: React.ElementType;
+  gradient: string;
+  growth?: number;
+  subtitle?: string;
+}
+
+const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon: Icon, gradient, growth, subtitle }) => {
+  return (
+    <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-200/50 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-gray-600 mb-1">{title}</p>
+          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          {subtitle && (
+            <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+          )}
+        </div>
+        <div className={`p-3 bg-gradient-to-br ${gradient} rounded-2xl shadow-lg`}>
+          <Icon className="h-8 w-8 text-white" />
+        </div>
+      </div>
+      
+      {growth !== undefined && (
+        <div className="flex items-center space-x-2">
+          <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-semibold ${
+            growth >= 0 
+              ? 'bg-green-100 text-green-700' 
+              : 'bg-red-100 text-red-700'
+          }`}>
+            {growth >= 0 ? (
+              <ArrowUp className="h-3 w-3" />
+            ) : (
+              <ArrowDown className="h-3 w-3" />
+            )}
+            <span>{Math.abs(growth).toFixed(1)}%</span>
+          </div>
+          <span className="text-xs text-gray-500">vs yesterday</span>
         </div>
       )}
     </div>
