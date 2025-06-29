@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useAuthContext } from '../../contexts/AuthContext';
@@ -7,6 +7,17 @@ import { useAuthContext } from '../../contexts/AuthContext';
 const Layout: React.FC = () => {
   const { user } = useAuthContext();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  // Check if running in Electron (desktop mode)
+  const isElectron = window.electronAPI !== undefined;
+
+  useEffect(() => {
+    // Auto-close sidebar when navigating to POS page in desktop mode
+    if (isElectron && location.pathname === '/pos') {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname, isElectron]);
 
   if (!user) {
     return <Outlet />;
@@ -25,10 +36,11 @@ const Layout: React.FC = () => {
         />
       )}
       
-      {/* Sidebar */}
+      {/* Sidebar - Hide on POS page in desktop mode */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+        fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:static lg:inset-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isElectron && location.pathname === '/pos' ? 'lg:hidden' : 'lg:translate-x-0'}
       `}>
         <Sidebar onClose={() => setSidebarOpen(false)} />
       </div>
@@ -37,7 +49,7 @@ const Layout: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 relative z-10">
-          <div className="max-w-7xl mx-auto">
+          <div className={`mx-auto ${isElectron && location.pathname === '/pos' ? 'max-w-none' : 'max-w-7xl'}`}>
             <Outlet />
           </div>
         </main>
