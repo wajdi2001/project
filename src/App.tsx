@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuthContext } from './contexts/AuthContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { initializeFirebaseData } from './utils/firebaseInit';
 import Layout from './components/ui/Layout';
 import LoginForm from './components/auth/LoginForm';
@@ -60,33 +61,35 @@ function App() {
 
   return (
     <AuthProvider>
-      <Router>
-        <div className="App">
-          <AppRoutes />
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-                borderRadius: '8px',
-                padding: '12px',
-              },
-              success: {
+      <LanguageProvider>
+        <Router>
+          <div className="App">
+            <AppRoutes />
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
                 style: {
-                  background: '#10b981',
+                  background: '#363636',
+                  color: '#fff',
+                  borderRadius: '8px',
+                  padding: '12px',
                 },
-              },
-              error: {
-                style: {
-                  background: '#ef4444',
+                success: {
+                  style: {
+                    background: '#10b981',
+                  },
                 },
-              },
-            }}
-          />
-        </div>
-      </Router>
+                error: {
+                  style: {
+                    background: '#ef4444',
+                  },
+                },
+              }}
+            />
+          </div>
+        </Router>
+      </LanguageProvider>
     </AuthProvider>
   );
 }
