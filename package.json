@@ -16,7 +16,12 @@
     "build-electron": "npm run build && electron-builder --publish=never",
     "deploy": "npm run build && netlify deploy --prod --dir=dist",
     "deploy:preview": "npm run build && netlify deploy --dir=dist",
-    "start": "npm run dev"
+    "start": "npm run dev",
+    "clear-cache": "node clear-cache.js",
+    "fresh-install": "npm run clear-cache && npm install",
+    "fresh-build": "npm run clear-cache && npm install && npm run build",
+    "fresh-electron": "npm run clear-cache && npm install && npm run build && npm run electron",
+    "reset": "npm run clear-cache && rm -rf node_modules package-lock.json && npm install"
   },
   "dependencies": {
     "caniuse-lite": "^1.0.30001726",

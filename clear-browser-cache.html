@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Browser Cache - Coffee Shop POS</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #fef3c7, #fed7aa);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d97706;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .method {
+            background: #f9fafb;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 12px;
+            border-left: 4px solid #d97706;
+        }
+        .method h3 {
+            color: #374151;
+            margin-top: 0;
+        }
+        .shortcut {
+            background: #1f2937;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        button {
+            background: linear-gradient(135deg, #d97706, #ea580c);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        .warning {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Clear Browser Cache - Coffee Shop POS</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> Clearing cache will log you out and remove stored data. Make sure to save any important work first.
+        </div>
+
+        <div class="method">
+            <h3>🌐 Method 1: Browser Developer Tools</h3>
+            <p><strong>Chrome/Edge:</strong></p>
+            <ol>
+                <li>Press <span class="shortcut">F12</span> or <span class="shortcut">Ctrl+Shift+I</span></li>
+                <li>Right-click the refresh button</li>
+                <li>Select "Empty Cache and Hard Reload"</li>
+            </ol>
+            <p><strong>Firefox:</strong></p>
+            <ol>
+                <li>Press <span class="shortcut">F12</span></li>
+                <li>Go to Network tab</li>
+                <li>Check "Disable Cache"</li>
+                <li>Refresh the page</li>
+            </ol>
+        </div>
+
+        <div class="method">
+            <h3>⚙️ Method 2: Browser Settings</h3>
+            <p><strong>Chrome:</strong></p>
+            <ol>
+                <li>Press <span class="shortcut">Ctrl+Shift+Delete</span></li>
+                <li>Select "All time" for time range</li>
+                <li>Check "Cached images and files"</li>
+                <li>Click "Clear data"</li>
+            </ol>
+            <p><strong>Firefox:</strong></p>
+            <ol>
+                <li>Press <span class="shortcut">Ctrl+Shift+Delete</span></li>
+                <li>Select "Everything" for time range</li>
+                <li>Check "Cache"</li>
+                <li>Click "Clear Now"</li>
+            </ol>
+        </div>
+
+        <div class="method">
+            <h3>🔄 Method 3: Hard Refresh</h3>
+            <p>Try these keyboard shortcuts:</p>
+            <ul>
+                <li><span class="shortcut">Ctrl+F5</span> (Windows/Linux)</li>
+                <li><span class="shortcut">Cmd+Shift+R</span> (Mac)</li>
+                <li><span class="shortcut">Ctrl+Shift+R</span> (Windows/Linux)</li>
+            </ul>
+        </div>
+
+        <div class="method">
+            <h3>🧹 Method 4: JavaScript Cache Clear</h3>
+            <p>Click the buttons below to clear different types of cache:</p>
+            
+            <button onclick="clearLocalStorage()">Clear Local Storage</button>
+            <button onclick="clearSessionStorage()">Clear Session Storage</button>
+            <button onclick="clearIndexedDB()">Clear IndexedDB</button>
+            <button onclick="clearAllCache()">Clear All Cache</button>
+            
+            <div id="result"></div>
+        </div>
+
+        <div class="method">
+            <h3>🔧 Method 5: Incognito/Private Mode</h3>
+            <p>Open the app in incognito/private mode to bypass cache:</p>
+            <ul>
+                <li><span class="shortcut">Ctrl+Shift+N</span> (Chrome)</li>
+                <li><span class="shortcut">Ctrl+Shift+P</span> (Firefox)</li>
+            </ul>
+        </div>
+
+        <div class="method">
+            <h3>🖥️ Electron App Cache</h3>
+            <p>For the desktop Electron app:</p>
+            <ol>
+                <li>Close the Electron app completely</li>
+                <li>Run: <span class="shortcut">npm run clear-cache</span></li>
+                <li>Run: <span class="shortcut">npm run fresh-electron</span></li>
+            </ol>
+        </div>
+
+        <div class="success" id="successMessage" style="display: none;">
+            ✅ Cache cleared successfully! Please refresh the page.
+        </div>
+    </div>
+
+    <script>
+        function showSuccess() {
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('result').innerHTML = '<p style="color: green;">✅ Operation completed!</p>';
+        }
+
+        function showError(error) {
+            document.getElementById('result').innerHTML = `<p style="color: red;">❌ Error: ${error}</p>`;
+        }
+
+        function clearLocalStorage() {
+            try {
+                localStorage.clear();
+                showSuccess();
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function clearSessionStorage() {
+            try {
+                sessionStorage.clear();
+                showSuccess();
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function clearIndexedDB() {
+            try {
+                if ('indexedDB' in window) {
+                    // Clear POS database
+                    const deleteDB = indexedDB.deleteDatabase('pos-db');
+                    deleteDB.onsuccess = () => showSuccess();
+                    deleteDB.onerror = () => showError('Failed to clear IndexedDB');
+                } else {
+                    showError('IndexedDB not supported');
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function clearAllCache() {
+            try {
+                // Clear all storage types
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Clear IndexedDB
+                if ('indexedDB' in window) {
+                    indexedDB.deleteDatabase('pos-db');
+                }
+                
+                // Clear service worker cache if available
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                }
+                
+                showSuccess();
+                
+                // Auto-refresh after 2 seconds
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+                
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Auto-detect if running in Electron
+        if (window.electronAPI) {
+            document.body.innerHTML += `
+                <div class="method">
+                    <h3>⚡ Electron Detected</h3>
+                    <p>You're running the desktop version. Use these commands in terminal:</p>
+                    <ul>
+                        <li><code>npm run clear-cache</code> - Clear all cache</li>
+                        <li><code>npm run fresh-install</code> - Fresh install</li>
+                        <li><code>npm run reset</code> - Complete reset</li>
+                    </ul>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
