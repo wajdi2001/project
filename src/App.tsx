@@ -20,10 +20,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Coffee Shop POS...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-amber-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading Coffee Shop POS...</p>
         </div>
       </div>
     );
@@ -56,7 +56,16 @@ const AppRoutes: React.FC = () => {
 function App() {
   useEffect(() => {
     // Initialize Firebase data on app start
-    initializeFirebaseData();
+    const initData = async () => {
+      try {
+        await initializeFirebaseData();
+        console.log('Firebase data initialized successfully');
+      } catch (error) {
+        console.error('Error initializing Firebase data:', error);
+      }
+    };
+
+    initData();
   }, []);
 
   return (

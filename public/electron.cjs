@@ -25,34 +25,55 @@ function createWindow() {
 
   // Load the app
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
+    // Wait for dev server to be ready
+    const loadDevServer = () => {
+      mainWindow.loadURL('http://localhost:5173')
+        .then(() => {
+          console.log('Dev server loaded successfully');
+        })
+        .catch((err) => {
+          console.log('Dev server not ready, retrying in 1 second...', err.message);
+          setTimeout(loadDevServer, 1000);
+        });
+    };
+    loadDevServer();
+    
+    // Open DevTools in development
+    mainWindow.webContents.once('dom-ready', () => {
+      mainWindow.webContents.openDevTools();
+    });
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    const indexPath = path.join(__dirname, '../dist/index.html');
+    console.log('Loading production build from:', indexPath);
+    mainWindow.loadFile(indexPath)
+      .catch((err) => {
+        console.error('Failed to load production build:', err);
+      });
   }
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    
-    // Focus the window
-    if (isDev) {
-      mainWindow.focus();
-    }
+    console.log('Window is ready to show');
   });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 
-  // Handle navigation
-  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
-    console.log('Failed to load:', errorCode, errorDescription);
-    if (isDev) {
-      // Retry loading in development
+  // Handle navigation errors
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.log('Failed to load:', errorCode, errorDescription, validatedURL);
+    if (isDev && errorCode === -102) {
+      // Connection refused, dev server might not be ready
       setTimeout(() => {
         mainWindow.loadURL('http://localhost:5173');
-      }, 1000);
+      }, 2000);
     }
+  });
+
+  // Log when page finishes loading
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('Page finished loading');
   });
 
   // Create application menu
@@ -123,7 +144,9 @@ function createWindow() {
   Menu.setApplicationMenu(menu);
 }
 
+// Ensure app is ready before creating window
 app.whenReady().then(() => {
+  console.log('Electron app is ready');
   createWindow();
 });
 
@@ -143,8 +166,6 @@ app.on('activate', () => {
 ipcMain.handle('print-receipt', async (event, receiptData) => {
   try {
     console.log('Printing receipt:', receiptData);
-    
-    // Simulate printing for demo
     return { success: true };
   } catch (error) {
     console.error('Print error:', error);
@@ -167,9 +188,11 @@ ipcMain.handle('scan-barcode', async (event) => {
     console.log('Scanning barcode');
     
     const sampleBarcodes = [
-      '1234567890123',
-      '9876543210987',
-      '5555555555555'
+      '1234567890001',
+      '1234567890002',
+      '1234567890003',
+      '1234567890004',
+      '1234567890005'
     ];
     
     const randomBarcode = sampleBarcodes[Math.floor(Math.random() * sampleBarcodes.length)];
