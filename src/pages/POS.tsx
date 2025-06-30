@@ -27,9 +27,11 @@ import { Product, CartItem, Category } from '../types';
 import BarcodeScanner from '../components/pos/BarcodeScanner';
 import CashDrawer from '../components/pos/CashDrawer';
 import toast from 'react-hot-toast';
+import { useSidebar } from '../components/ui/Layout';
 
 const POS: React.FC = () => {
   const { user } = useAuthContext();
+  const { openSidebar, sidebarOpen } = useSidebar();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -221,6 +223,17 @@ const POS: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col lg:flex-row bg-gradient-to-br from-gray-50 via-white to-amber-50/30">
+      {/* Back/Menu Button for Sidebar */}
+      {!sidebarOpen && (
+        <button
+          onClick={openSidebar}
+          className="fixed top-4 left-4 z-50 p-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-full shadow-lg lg:hidden"
+          title="Open Menu"
+        >
+          <Menu className="h-6 w-6" />
+        </button>
+      )}
+
       {/* Mobile Cart Overlay */}
       {showMobileCart && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden" onClick={() => setShowMobileCart(false)} />

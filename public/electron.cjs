@@ -2,6 +2,9 @@ const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 const isDev = process.env.NODE_ENV === 'development';
 
+// Disable GPU hardware acceleration before app is ready
+app.disableHardwareAcceleration();
+
 let mainWindow;
 
 function createWindow() {
